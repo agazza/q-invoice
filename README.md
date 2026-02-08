@@ -140,7 +140,7 @@ Possibili miglioramenti:
 
 ## 📄 Licenza
 
-Questo progetto è fornito "as-is" per uso personale e solo per uso non commerciale, secondo la licenza GPM V3.0.
+Questo progetto è fornito "as-is" per uso personale e solo per uso non commerciale, secondo la licenza GPL V3.0.
 
 ## 🇮🇹 Made for Italy
 
