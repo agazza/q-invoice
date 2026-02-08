@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "Italian Invoice QR Payment",
+  "version": "1.0.0",
+  "description": "Extract payment info from Italian e-invoices and generate EPC QR codes",
+  "permissions": [
+    "activeTab",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://mail.google.com/*",
+    "https://drive.google.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://mail.google.com/*",
+        "https://drive.google.com/*"
+      ],
+      "js": ["content.js"],
+      "css": ["styles.css"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["qrcode.min.js"],
+      "matches": ["https://mail.google.com/*", "https://drive.google.com/*"]
+    }
+  ],
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  }
+}

@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Invoice QR Generator</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #202124;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #5f6368;
+            margin-bottom: 30px;
+        }
+        .upload-area {
+            border: 2px dashed #dadce0;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .upload-area:hover {
+            border-color: #1a73e8;
+            background: #f8f9fa;
+        }
+        .upload-area.dragover {
+            border-color: #1a73e8;
+            background: #e8f0fe;
+        }
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        .file-input {
+            display: none;
+        }
+        .test-button {
+            background: #1a73e8;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #1557b0;
+        }
+        .info-box {
+            background: #e8f0fe;
+            border-left: 4px solid #1a73e8;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .info-box h3 {
+            margin-top: 0;
+            color: #1a73e8;
+        }
+        .sample-data {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Test Invoice QR Generator</h1>
+        <p class="subtitle">Testa la generazione di QR code da fatture elettroniche italiane</p>
+
+        <div class="upload-area" id="dropZone">
+            <div class="upload-icon">📄</div>
+            <h3>Trascina qui la tua fattura XML</h3>
+            <p>oppure</p>
+            <button class="test-button" onclick="document.getElementById('fileInput').click()">
+                Seleziona File
+            </button>
+            <input type="file" id="fileInput" class="file-input" accept=".xml,.pdf">
+        </div>
+
+        <div style="text-align: center; margin: 20px 0;">
+            <button class="test-button" onclick="loadSampleInvoice()">
+                🚀 Usa Fattura di Esempio
+            </button>
+        </div>
+
+        <div class="info-box">
+            <h3>ℹ️ Come funziona</h3>
+            <ul>
+                <li>Carica un file XML di fattura elettronica italiana (FatturaPA)</li>
+                <li>L'app estrae automaticamente IBAN, importo, beneficiario e causale</li>
+                <li>Genera un QR code EPC compatibile con le app di home banking</li>
+                <li>Scansiona il QR code con l'app della tua banca per pagare</li>
+            </ul>
+        </div>
+
+        <div class="info-box" style="background: #fef7e0; border-left-color: #f9ab00;">
+            <h3>⚡ Dati fattura di esempio</h3>
+            <div class="sample-data">
+Beneficiario: Acme S.r.l.
+IBAN: IT60X0542811101000000123456
+Importo: €1220.00
+Causale: Fattura 2026/001 del 05/02/2026
+            </div>
+        </div>
+    </div>
+
+    <script src="qrcode.min.js"></script>
+    <script>
+        // Import the parser classes from content.js
+        class FatturaPAParser {
+            static parseXML(xmlString) {
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlString, 'text/xml');
+                
+                if (xmlDoc.querySelector('parsererror')) {
+                    console.error('XML parsing error');
+                    return null;
+                }
+
+                try {
+                    const cedente = xmlDoc.querySelector('CedentePrestatore');
+                    const beneficiary = cedente?.querySelector('Anagrafica Denominazione')?.textContent ||
+                                      cedente?.querySelector('Anagrafica Nome')?.textContent + ' ' + 
+                                      cedente?.querySelector('Anagrafica Cognome')?.textContent || 'Unknown';
+                    
+                    const iban = xmlDoc.querySelector('DatiPagamento IBAN')?.textContent?.replace(/\s/g, '') || '';
+                    const importo = xmlDoc.querySelector('DatiPagamento ImportoPagamento')?.textContent || 
+                                   xmlDoc.querySelector('DatiGeneraliDocumento ImportoTotaleDocumento')?.textContent || '0';
+                    
+                    const numeroDoc = xmlDoc.querySelector('DatiGeneraliDocumento Numero')?.textContent || '';
+                    const dataDoc = xmlDoc.querySelector('DatiGeneraliDocumento Data')?.textContent || '';
+                    const causale = xmlDoc.querySelector('DatiPagamento Causale')?.textContent || 
+                                   `Fattura ${numeroDoc} del ${dataDoc}`;
+
+                    return {
+                        beneficiary: beneficiary.trim(),
+                        iban: iban,
+                        amount: parseFloat(importo).toFixed(2),
+                        reference: causale.substring(0, 140)
+                    };
+                } catch (e) {
+                    console.error('Error parsing FatturaPA:', e);
+                    return null;
+                }
+            }
+        }
+
+        class EPCQRGenerator {
+            static generate(paymentData) {
+                const lines = [
+                    'BCD',
+                    '002',
+                    '1',
+                    'SCT',
+                    '',
+                    paymentData.beneficiary,
+                    paymentData.iban,
+                    'EUR' + paymentData.amount,
+                    '',
+                    paymentData.reference,
+                    '',
+                    ''
+                ];
+                return lines.join('\n');
+            }
+        }
+
+        class QRCodeModal {
+            constructor() {
+                this.modal = null;
+            }
+
+            show(paymentData, qrData) {
+                this.hide();
+
+                this.modal = document.createElement('div');
+                this.modal.className = 'invoice-qr-modal';
+                this.modal.innerHTML = `
+                    <div class="invoice-qr-content">
+                        <div class="invoice-qr-header">
+                            <h2>Pagamento Fattura</h2>
+                            <button class="invoice-qr-close">&times;</button>
+                        </div>
+                        <div class="invoice-qr-body">
+                            <div class="invoice-qr-info">
+                                <p><strong>Beneficiario:</strong> ${this.escapeHtml(paymentData.beneficiary)}</p>
+                                <p><strong>IBAN:</strong> ${this.escapeHtml(paymentData.iban)}</p>
+                                <p><strong>Importo:</strong> €${this.escapeHtml(paymentData.amount)}</p>
+                                <p><strong>Causale:</strong> ${this.escapeHtml(paymentData.reference)}</p>
+                            </div>
+                            <div class="invoice-qr-code" id="qrcode-container"></div>
+                            <p class="invoice-qr-instructions">
+                                Scansiona il QR code con l'app della tua banca per pagare
+                            </p>
+                        </div>
+                    </div>
+                `;
+
+                document.body.appendChild(this.modal);
+
+                setTimeout(() => {
+                    new QRCode(document.getElementById('qrcode-container'), {
+                        text: qrData,
+                        width: 256,
+                        height: 256,
+                        colorDark: '#000000',
+                        colorLight: '#ffffff',
+                        correctLevel: QRCode.CorrectLevel.M
+                    });
+                }, 100);
+
+                this.modal.querySelector('.invoice-qr-close').addEventListener('click', () => {
+                    this.hide();
+                });
+
+                this.modal.addEventListener('click', (e) => {
+                    if (e.target === this.modal) {
+                        this.hide();
+                    }
+                });
+            }
+
+            hide() {
+                if (this.modal) {
+                    this.modal.remove();
+                    this.modal = null;
+                }
+            }
+
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+        }
+
+        const modal = new QRCodeModal();
+
+        async function processFile(file) {
+            const text = await file.text();
+            const paymentData = FatturaPAParser.parseXML(text);
+            
+            if (!paymentData || !paymentData.iban) {
+                alert('Impossibile trovare i dati di pagamento nella fattura.');
+                return;
+            }
+
+            const qrData = EPCQRGenerator.generate(paymentData);
+            modal.show(paymentData, qrData);
+        }
+
+        // File input handler
+        document.getElementById('fileInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                processFile(file);
+            }
+        });
+
+        // Drag and drop
+        const dropZone = document.getElementById('dropZone');
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            
+            const file = e.dataTransfer.files[0];
+            if (file && (file.name.endsWith('.xml') || file.name.endsWith('.pdf'))) {
+                await processFile(file);
+            } else {
+                alert('Per favore carica un file XML o PDF');
+            }
+        });
+
+        // Load sample invoice
+        async function loadSampleInvoice() {
+            const response = await fetch('test-invoice.xml');
+            const text = await response.text();
+            const file = new File([text], 'test-invoice.xml', { type: 'text/xml' });
+            await processFile(file);
+        }
+    </script>
+</body>
+</html>

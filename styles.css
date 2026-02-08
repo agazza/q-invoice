@@ -1,0 +1,182 @@
+/* QR Code Button */
+.invoice-qr-button {
+  background: #1a73e8;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.2s;
+  margin: 4px;
+  z-index: 1000;
+  position: relative;
+}
+
+.invoice-qr-button:hover {
+  background: #1557b0;
+}
+
+.invoice-qr-button:active {
+  background: #0d47a1;
+}
+
+/* Modal Overlay */
+.invoice-qr-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.2s;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Modal Content */
+.invoice-qr-content {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow: auto;
+  animation: slideUp 0.3s;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Header */
+.invoice-qr-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.invoice-qr-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 500;
+  color: #202124;
+}
+
+.invoice-qr-close {
+  background: none;
+  border: none;
+  font-size: 28px;
+  color: #5f6368;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.invoice-qr-close:hover {
+  background: #f1f3f4;
+}
+
+/* Body */
+.invoice-qr-body {
+  padding: 24px;
+}
+
+.invoice-qr-info {
+  background: #f8f9fa;
+  border-radius: 4px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.invoice-qr-info p {
+  margin: 8px 0;
+  font-size: 14px;
+  color: #202124;
+  line-height: 1.5;
+}
+
+.invoice-qr-info strong {
+  color: #5f6368;
+  font-weight: 500;
+  display: inline-block;
+  min-width: 100px;
+}
+
+/* QR Code Container */
+.invoice-qr-code {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.invoice-qr-code img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Instructions */
+.invoice-qr-instructions {
+  text-align: center;
+  color: #5f6368;
+  font-size: 14px;
+  margin: 0;
+  font-style: italic;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .invoice-qr-content {
+    width: 95%;
+    max-width: none;
+  }
+  
+  .invoice-qr-header {
+    padding: 16px;
+  }
+  
+  .invoice-qr-body {
+    padding: 16px;
+  }
+  
+  .invoice-qr-info strong {
+    display: block;
+    margin-bottom: 4px;
+  }
+}

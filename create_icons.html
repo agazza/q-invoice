@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head><title>Generate Icons</title></head>
+<body>
+<canvas id="canvas16" width="16" height="16"></canvas>
+<canvas id="canvas48" width="48" height="48"></canvas>
+<canvas id="canvas128" width="128" height="128"></canvas>
+<script>
+function createIcon(canvasId, size) {
+  const canvas = document.getElementById(canvasId);
+  const ctx = canvas.getContext('2d');
+  
+  // Background
+  ctx.fillStyle = '#1a73e8';
+  ctx.fillRect(0, 0, size, size);
+  
+  // QR-like pattern
+  ctx.fillStyle = '#ffffff';
+  const blockSize = size / 4;
+  ctx.fillRect(blockSize, blockSize, blockSize, blockSize);
+  ctx.fillRect(blockSize * 2, blockSize * 2, blockSize, blockSize);
+  
+  // Download
+  const link = document.createElement('a');
+  link.download = 'icon' + size + '.png';
+  link.href = canvas.toDataURL();
+  link.click();
+}
+
+createIcon('canvas16', 16);
+setTimeout(() => createIcon('canvas48', 48), 100);
+setTimeout(() => createIcon('canvas128', 128), 200);
+</script>
+</body>
+</html>
