@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Italian Invoice QR Payment",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Extract payment info from Italian e-invoices and generate EPC QR codes",
   "permissions": [
     "activeTab",
