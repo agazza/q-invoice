@@ -129,6 +129,12 @@ Causale: Fattura 2026/001 del 05/02/2026
     </div>
 
     <script src="qrcode.min.js"></script>
+    <script src="pdfjs/pdf.min.js"></script>
+    <script>
+        if (window.pdfjsLib) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'pdfjs/pdf.worker.min.js';
+        }
+    </script>
     <script>
         // Import the parser classes from content.js
         class FatturaPAParser {
@@ -229,7 +235,7 @@ Causale: Fattura 2026/001 del 05/02/2026
                         height: 256,
                         colorDark: '#000000',
                         colorLight: '#ffffff',
-                        correctLevel: QRCode.CorrectLevel.M
+                        correctLevel: QRCode.CorrectLevel.L
                     });
                 }, 100);
 
@@ -258,12 +264,100 @@ Causale: Fattura 2026/001 del 05/02/2026
             }
         }
 
+        class PDFHandler {
+            static extractXMLFromPDF(arrayBuffer) {
+                const text = new TextDecoder('latin1').decode(new Uint8Array(arrayBuffer));
+                const xmlStart = text.indexOf('<?xml');
+                if (xmlStart === -1) return null;
+                const closingTags = [
+                    '</FatturaElettronica>',
+                    '</n1:FatturaElettronica>',
+                    '</p:FatturaElettronica>',
+                    '</ns2:FatturaElettronica>'
+                ];
+                for (const tag of closingTags) {
+                    const endIdx = text.lastIndexOf(tag);
+                    if (endIdx !== -1) return text.substring(xmlStart, endIdx + tag.length);
+                }
+                return null;
+            }
+
+            static async extractTextFromPDF(arrayBuffer) {
+                const pdfLib = window.pdfjsLib;
+                if (!pdfLib) throw new Error('PDF.js non disponibile');
+                const pdf = await pdfLib.getDocument({ data: arrayBuffer }).promise;
+                const pages = [];
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const content = await page.getTextContent();
+                    pages.push(content.items.map(item => item.str).join(' '));
+                }
+                return pages.join('\n');
+            }
+
+            static parsePaymentDataFromText(text) {
+                const ibanMatch = text.match(/\b([A-Z]{2}\d{2}[A-Z0-9]{10,30})\b/);
+                if (!ibanMatch) return null;
+                const iban = ibanMatch[1].replace(/\s/g, '');
+
+                const amountMatch = text.match(/(?:totale|importo)[^\d]{0,30}([\d]{1,6}[.,][\d.,]{2,6})/i);
+                let amount = '0.00';
+                if (amountMatch) {
+                    amount = amountMatch[1].replace(/\./g, '').replace(',', '.');
+                    amount = parseFloat(amount).toFixed(2);
+                }
+
+                const lines = text.split(/[\n\r]+/).map(l => l.trim()).filter(l => l.length > 2);
+                const beneficiary = lines[0] || 'Beneficiario sconosciuto';
+
+                const numMatch = text.match(/(?:fattura|n[°.]?)\s*[:\s]*([\w/\-]+)/i);
+                const dateMatch = text.match(/(\d{2}[\/\-]\d{2}[\/\-]\d{4}|\d{4}[\/\-]\d{2}[\/\-]\d{2})/);
+                const reference = [
+                    numMatch ? `Fattura ${numMatch[1]}` : '',
+                    dateMatch ? `del ${dateMatch[1]}` : ''
+                ].filter(Boolean).join(' ').substring(0, 140) || 'Pagamento fattura';
+
+                return { beneficiary, iban, amount, reference };
+            }
+
+            static async processFile(file) {
+                try {
+                    const arrayBuffer = await file.arrayBuffer();
+                    if (file.name.endsWith('.xml')) {
+                        return { xmlContent: new TextDecoder('utf-8').decode(arrayBuffer) };
+                    }
+                    if (file.name.endsWith('.pdf')) {
+                        const xml = this.extractXMLFromPDF(arrayBuffer);
+                        if (xml) return { xmlContent: xml };
+                        const pdfText = await this.extractTextFromPDF(arrayBuffer);
+                        const paymentData = this.parsePaymentDataFromText(pdfText);
+                        if (paymentData) return { paymentData };
+                    }
+                    return null;
+                } catch (e) {
+                    console.error('Error processing file:', e);
+                    return null;
+                }
+            }
+        }
+
         const modal = new QRCodeModal();
 
         async function processFile(file) {
-            const text = await file.text();
-            const paymentData = FatturaPAParser.parseXML(text);
-            
+            const result = await PDFHandler.processFile(file);
+
+            if (!result) {
+                alert('Impossibile estrarre dati dalla fattura. Assicurati che sia una fattura elettronica italiana valida.');
+                return;
+            }
+
+            let paymentData;
+            if (result.xmlContent) {
+                paymentData = FatturaPAParser.parseXML(result.xmlContent);
+            } else {
+                paymentData = result.paymentData;
+            }
+
             if (!paymentData || !paymentData.iban) {
                 alert('Impossibile trovare i dati di pagamento nella fattura.');
                 return;
