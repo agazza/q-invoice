@@ -7,6 +7,14 @@
   script.src = chrome.runtime.getURL('qrcode.min.js');
   document.head.appendChild(script);
 
+  // Load PDF.js library
+  const pdfScript = document.createElement('script');
+  pdfScript.src = chrome.runtime.getURL('pdfjs/pdf.min.js');
+  pdfScript.onload = () => {
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc = chrome.runtime.getURL('pdfjs/pdf.worker.min.js');
+  };
+  document.head.appendChild(pdfScript);
+
   // Parser for Italian FatturaPA XML
   class FatturaPAParser {
     static parseXML(xmlString) {
@@ -119,7 +127,7 @@
           height: 256,
           colorDark: '#000000',
           colorLight: '#ffffff',
-          correctLevel: QRCode.CorrectLevel.M
+          correctLevel: QRCode.CorrectLevel.L
         });
       }, 100);
 
@@ -152,36 +160,88 @@
 
   // PDF Handler
   class PDFHandler {
-    static async extractXMLFromPDF(arrayBuffer) {
-      // For now, we'll try to extract embedded XML from PDF
-      // Italian e-invoices are often XML files, sometimes in PDF containers
-      const uint8Array = new Uint8Array(arrayBuffer);
-      const text = new TextDecoder('utf-8').decode(uint8Array);
-      
-      // Try to find XML content
-      const xmlMatch = text.match(/<\?xml[\s\S]*?<\/.*?FatturaElettronica.*?>/);
-      if (xmlMatch) {
-        return xmlMatch[0];
+    // Level 1: search for embedded FatturaPA XML inside a PDF (byte-safe latin1 decoding)
+    static extractXMLFromPDF(arrayBuffer) {
+      const text = new TextDecoder('latin1').decode(new Uint8Array(arrayBuffer));
+      const xmlStart = text.indexOf('<?xml');
+      if (xmlStart === -1) return null;
+      const closingTags = [
+        '</FatturaElettronica>',
+        '</n1:FatturaElettronica>',
+        '</p:FatturaElettronica>',
+        '</ns2:FatturaElettronica>'
+      ];
+      for (const tag of closingTags) {
+        const endIdx = text.lastIndexOf(tag);
+        if (endIdx !== -1) return text.substring(xmlStart, endIdx + tag.length);
       }
-      
       return null;
+    }
+
+    // Level 2: extract all text from a PDF using PDF.js
+    static async extractTextFromPDF(arrayBuffer) {
+      const pdfLib = window.pdfjsLib;
+      if (!pdfLib) throw new Error('PDF.js non disponibile');
+      const pdf = await pdfLib.getDocument({ data: arrayBuffer }).promise;
+      const pages = [];
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        pages.push(content.items.map(item => item.str).join(' '));
+      }
+      return pages.join('\n');
+    }
+
+    // Parse payment data from unstructured PDF text (best-effort)
+    static parsePaymentDataFromText(text) {
+      // IBAN: standard format (IT + 2 digits + 23 alphanum for Italian, or generic)
+      const ibanMatch = text.match(/\b([A-Z]{2}\d{2}[A-Z0-9]{10,30})\b/);
+      if (!ibanMatch) return null;
+      const iban = ibanMatch[1].replace(/\s/g, '');
+
+      // Amount: look for totale/importo keyword then a number (Italian format 1.220,00 or 1220.00)
+      const amountMatch = text.match(/(?:totale|importo)[^\d]{0,30}([\d]{1,6}[.,][\d.,]{2,6})/i);
+      let amount = '0.00';
+      if (amountMatch) {
+        // Normalise Italian number format (1.220,00 → 1220.00)
+        amount = amountMatch[1].replace(/\./g, '').replace(',', '.');
+        amount = parseFloat(amount).toFixed(2);
+      }
+
+      // Beneficiary: first non-empty line of the PDF text (usually the company name)
+      const lines = text.split(/[\n\r]+/).map(l => l.trim()).filter(l => l.length > 2);
+      const beneficiary = lines[0] || 'Beneficiario sconosciuto';
+
+      // Reference: look for invoice number and date
+      const numMatch = text.match(/(?:fattura|n[°.]?)\s*[:\s]*([\w/\-]+)/i);
+      const dateMatch = text.match(/(\d{2}[\/\-]\d{2}[\/\-]\d{4}|\d{4}[\/\-]\d{2}[\/\-]\d{2})/);
+      const reference = [
+        numMatch ? `Fattura ${numMatch[1]}` : '',
+        dateMatch ? `del ${dateMatch[1]}` : ''
+      ].filter(Boolean).join(' ').substring(0, 140) || 'Pagamento fattura';
+
+      return { beneficiary, iban, amount, reference };
     }
 
     static async processFile(file) {
       try {
         const arrayBuffer = await file.arrayBuffer();
-        
-        // Check if it's an XML file directly
+
         if (file.name.endsWith('.xml')) {
-          const text = new TextDecoder('utf-8').decode(arrayBuffer);
-          return text;
+          return { xmlContent: new TextDecoder('utf-8').decode(arrayBuffer) };
         }
-        
-        // Try to extract XML from PDF
+
         if (file.name.endsWith('.pdf')) {
-          return await this.extractXMLFromPDF(arrayBuffer);
+          // Try embedded XML first (more reliable)
+          const xml = this.extractXMLFromPDF(arrayBuffer);
+          if (xml) return { xmlContent: xml };
+
+          // Fall back to PDF text extraction
+          const pdfText = await this.extractTextFromPDF(arrayBuffer);
+          const paymentData = this.parsePaymentDataFromText(pdfText);
+          if (paymentData) return { paymentData };
         }
-        
+
         return null;
       } catch (e) {
         console.error('Error processing file:', e);
@@ -202,15 +262,20 @@
   }
 
   async function handleInvoiceFile(file) {
-    const xmlContent = await PDFHandler.processFile(file);
-    
-    if (!xmlContent) {
+    const result = await PDFHandler.processFile(file);
+
+    if (!result) {
       alert('Impossibile estrarre dati dalla fattura. Assicurati che sia una fattura elettronica italiana valida.');
       return;
     }
 
-    const paymentData = FatturaPAParser.parseXML(xmlContent);
-    
+    let paymentData;
+    if (result.xmlContent) {
+      paymentData = FatturaPAParser.parseXML(result.xmlContent);
+    } else {
+      paymentData = result.paymentData;
+    }
+
     if (!paymentData || !paymentData.iban) {
       alert('Impossibile trovare i dati di pagamento nella fattura.');
       return;

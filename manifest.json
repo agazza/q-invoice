@@ -23,7 +23,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["qrcode.min.js"],
+      "resources": ["qrcode.min.js", "pdfjs/pdf.min.js", "pdfjs/pdf.worker.min.js"],
       "matches": ["https://mail.google.com/*", "https://drive.google.com/*"]
     }
   ],
