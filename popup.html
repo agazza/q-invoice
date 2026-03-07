@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fatture in scadenza</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-header">
+    <h1>💼 Fatture da pagare</h1>
+    <span class="popup-badge" id="pending-badge" style="display:none"></span>
+  </div>
+
+  <div class="popup-tabs">
+    <button class="popup-tab active" data-tab="pending">Pendenti</button>
+    <button class="popup-tab" data-tab="paid">Pagate</button>
+  </div>
+
+  <div class="popup-list" id="payment-list">
+    <p class="popup-empty">Caricamento...</p>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

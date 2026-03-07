@@ -47,11 +47,15 @@
         const causale = xmlDoc.querySelector('DatiPagamento Causale')?.textContent || 
                        `Fattura ${numeroDoc} del ${dataDoc}`;
 
+        // Due date for payment deadline tracking
+        const dueDateRaw = xmlDoc.querySelector('DataScadenzaPagamento')?.textContent || null;
+
         return {
           beneficiary: beneficiary.trim(),
           iban: iban,
           amount: parseFloat(importo).toFixed(2),
-          reference: causale.substring(0, 140) // EPC max 140 chars
+          reference: causale.substring(0, 140), // EPC max 140 chars
+          dueDate: dueDateRaw // ISO date string or null
         };
       } catch (e) {
         console.error('Error parsing FatturaPA:', e);
@@ -93,6 +97,8 @@
       // Remove existing modal if any
       this.hide();
 
+      const dueDateValue = paymentData.dueDate || '';
+
       // Create modal
       this.modal = document.createElement('div');
       this.modal.className = 'invoice-qr-modal';
@@ -113,6 +119,14 @@
             <p class="invoice-qr-instructions">
               Scansiona il QR code con l'app della tua banca per pagare
             </p>
+            <div class="invoice-qr-save-section">
+              <label class="invoice-qr-save-label">Scadenza pagamento</label>
+              <div class="invoice-qr-save-row">
+                <input type="date" class="invoice-qr-due-date" value="${this.escapeHtml(dueDateValue)}">
+                <button class="invoice-qr-save-btn">💾 Salva scadenza</button>
+                <span class="invoice-qr-save-feedback"></span>
+              </div>
+            </div>
           </div>
         </div>
       `;
@@ -141,6 +155,31 @@
         if (e.target === this.modal) {
           this.hide();
         }
+      });
+
+      // Save payment deadline
+      this.modal.querySelector('.invoice-qr-save-btn').addEventListener('click', () => {
+        const dueDate = this.modal.querySelector('.invoice-qr-due-date').value || null;
+        const feedback = this.modal.querySelector('.invoice-qr-save-feedback');
+        const payment = {
+          id: crypto.randomUUID(),
+          beneficiary: paymentData.beneficiary,
+          iban: paymentData.iban,
+          amount: paymentData.amount,
+          reference: paymentData.reference,
+          dueDate: dueDate,
+          status: 'pending',
+          addedAt: new Date().toISOString(),
+          paidAt: null
+        };
+        chrome.storage.local.get(['payments'], ({ payments = [] }) => {
+          payments.push(payment);
+          chrome.storage.local.set({ payments }, () => {
+            feedback.textContent = '✓ Salvata';
+            feedback.className = 'invoice-qr-save-feedback invoice-qr-save-ok';
+            setTimeout(() => { feedback.textContent = ''; feedback.className = 'invoice-qr-save-feedback'; }, 3000);
+          });
+        });
       });
     }
 
@@ -220,7 +259,16 @@
         dateMatch ? `del ${dateMatch[1]}` : ''
       ].filter(Boolean).join(' ').substring(0, 140) || 'Pagamento fattura';
 
-      return { beneficiary, iban, amount, reference };
+      // Due date: look for "scadenza" followed by a date
+      let dueDate = null;
+      const dueDateMatch = text.match(/scadenza[^\d]{0,20}(\d{2}[\/\-]\d{2}[\/\-]\d{4})/i);
+      if (dueDateMatch) {
+        const parts = dueDateMatch[1].split(/[\/\-]/);
+        // Convert DD/MM/YYYY or DD-MM-YYYY to ISO YYYY-MM-DD
+        dueDate = parts.length === 3 ? `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}` : null;
+      }
+
+      return { beneficiary, iban, amount, reference, dueDate };
     }
 
     static async processFile(file) {

@@ -1,16 +1,29 @@
 {
   "manifest_version": 3,
   "name": "Italian Invoice QR Payment",
-  "version": "1.0.0",
-  "description": "Extract payment info from Italian e-invoices and generate EPC QR codes",
+  "version": "1.1.0",
+  "description": "Extract payment info from Italian e-invoices, track due dates and autofill bank transfers",
   "permissions": [
     "activeTab",
     "storage"
   ],
   "host_permissions": [
     "https://mail.google.com/*",
-    "https://drive.google.com/*"
+    "https://drive.google.com/*",
+    "https://banca.fineco.it/*"
   ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Fatture in scadenza",
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
   "content_scripts": [
     {
       "matches": [
@@ -19,6 +32,11 @@
       ],
       "js": ["content.js"],
       "css": ["styles.css"]
+    },
+    {
+      "matches": ["https://banca.fineco.it/*"],
+      "js": ["fineco.js"],
+      "css": ["fineco.css"]
     }
   ],
   "web_accessible_resources": [

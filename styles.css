@@ -160,6 +160,65 @@
   font-style: italic;
 }
 
+/* Save deadline section */
+.invoice-qr-save-section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e8eaed;
+}
+
+.invoice-qr-save-label {
+  display: block;
+  font-size: 13px;
+  color: #5f6368;
+  margin-bottom: 8px;
+}
+
+.invoice-qr-save-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.invoice-qr-due-date {
+  border: 1px solid #dadce0;
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 14px;
+  color: #202124;
+  outline: none;
+}
+
+.invoice-qr-due-date:focus {
+  border-color: #1a73e8;
+}
+
+.invoice-qr-save-btn {
+  background: #1a73e8;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 7px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.invoice-qr-save-btn:hover {
+  background: #1557b0;
+}
+
+.invoice-qr-save-feedback {
+  font-size: 13px;
+  color: #5f6368;
+}
+
+.invoice-qr-save-ok {
+  color: #1e8e3e;
+  font-weight: 500;
+}
+
 /* Responsive */
 @media (max-width: 600px) {
   .invoice-qr-content {
