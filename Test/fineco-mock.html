@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🧪 Mock Fineco Bonifici — Test locale</title>
+
+  <!-- Carica lo stesso CSS dell'estensione -->
+  <link rel="stylesheet" href="../fineco.css">
+
+  <style>
+    /* ── Layout pagina ── */
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: #f0f2f5;
+      margin: 0;
+      padding: 20px;
+    }
+
+    /* ── Barra di test ── */
+    #test-toolbar {
+      background: #1a1a2e;
+      color: #e0e0e0;
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    #test-toolbar h3 { margin: 0; font-size: 14px; color: #f90; flex: none; }
+    #test-toolbar button {
+      background: #2d2d5e;
+      color: #fff;
+      border: 1px solid #4a4a8a;
+      padding: 6px 14px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    #test-toolbar button:hover { background: #3d3d7e; }
+    #test-toolbar button.danger { background: #6b1a1a; border-color: #a03030; }
+    #storage-preview {
+      flex: 1 1 100%;
+      font-family: monospace;
+      font-size: 11px;
+      background: #0d0d1a;
+      color: #7fff7f;
+      padding: 8px;
+      border-radius: 4px;
+      white-space: pre-wrap;
+      max-height: 80px;
+      overflow-y: auto;
+    }
+
+    /* ── Contenitore form Fineco ── */
+    .fineco-wrapper {
+      background: #fff;
+      border-radius: 10px;
+      padding: 28px 32px;
+      max-width: 900px;
+      margin: 0 auto;
+      box-shadow: 0 2px 12px rgba(0,0,0,.1);
+    }
+
+    /* ── Stili base Bootstrap-like per il form ── */
+    .row { display: flex; flex-wrap: wrap; margin: 0 -8px; }
+    .col   { flex: 1; padding: 0 8px; }
+    .col-3 { flex: 0 0 25%; max-width: 25%; padding: 0 8px; }
+    .col-4 { flex: 0 0 33.33%; max-width: 33.33%; padding: 0 8px; }
+    .col-6 { flex: 0 0 50%; max-width: 50%; padding: 0 8px; }
+    .col-8 { flex: 0 0 66.67%; max-width: 66.67%; padding: 0 8px; }
+    .col-9 { flex: 0 0 75%; max-width: 75%; padding: 0 8px; }
+    .my-4  { margin-top: 1.5rem; margin-bottom: 1.5rem; }
+    .mt-2  { margin-top: .5rem; }
+    .pt-3  { padding-top: 1rem; }
+    .pb-2  { padding-bottom: .5rem; }
+    .pr-2  { padding-right: 8px; }
+    .pl-2  { padding-left: 8px; }
+    .mx-0  { margin-left: 0; margin-right: 0; }
+    .px-0  { padding-left: 0; padding-right: 0; }
+    .d-flex { display: flex; }
+    .justify-content-end { justify-content: flex-end; }
+    .text-center { text-align: center; }
+    .float-right { float: right; }
+
+    h4 { font-size: 13px; font-weight: 700; letter-spacing: .5px; color: #333; margin: 0; }
+
+    .form-group { position: relative; margin-bottom: 1.2rem; }
+    .form-control {
+      display: block; width: 100%; box-sizing: border-box;
+      padding: 18px 12px 6px;
+      border: 1px solid #bbb; border-radius: 4px;
+      font-size: 14px; background: #fff;
+      transition: border-color .2s;
+    }
+    .form-control:focus { outline: none; border-color: #f90; }
+    textarea.form-control { min-height: 72px; resize: vertical; }
+    select.form-control { padding-top: 18px; }
+
+    .fineco-label {
+      position: absolute; top: 6px; left: 13px;
+      font-size: 11px; color: #888; pointer-events: none;
+    }
+
+    .btn { padding: 8px 24px; border-radius: 4px; border: none; cursor: pointer; font-size: 14px; }
+    .btn-primary { background: #f90; color: #fff; font-weight: 600; }
+    .btn-primary:hover { background: #e08000; }
+    .btn-sm { padding: 6px 18px; font-size: 13px; }
+    .bg-lighter { background: #f8f8f8; border-top: 1px solid #eee; }
+
+    .custom-control { display: flex; align-items: center; gap: 8px; }
+    .custom-checkbox label, .custom-switch label { font-size: 13px; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════ BARRA DI TEST ═══════════════════ -->
+<div id="test-toolbar">
+  <h3>🧪 Test locale fineco.js</h3>
+  <button onclick="seedSinglePayment()">➕ Aggiungi fattura di test</button>
+  <button onclick="seedMultiplePayments()">➕ Aggiungi 3 fatture</button>
+  <button class="danger" onclick="clearStorage()">🗑 Svuota storage</button>
+  <button onclick="refreshStoragePreview()">🔄 Aggiorna preview</button>
+  <div id="storage-preview">— storage vuoto —</div>
+</div>
+
+<!-- ═══════════════════ FORM FINECO (DOM identico al reale) ═══════════════════ -->
+<div class="fineco-wrapper">
+  <form class="fineco-form" autocomplete="off">
+
+    <div class="row">
+      <div class="col-9">
+        Compila i campi o richiama i dati di un bonifico precedente dall'
+        <button type="button" style="background:none;border:none;color:#f90;cursor:pointer;text-decoration:underline">
+          Archivio bonifici
+        </button>
+      </div>
+    </div>
+
+    <!-- DATI BENEFICIARIO -->
+    <div class="my-4 row">
+      <div class="col"><h4>DATI BENEFICIARIO</h4></div>
+    </div>
+    <div class="my-4 row">
+      <div class="pr-2 col-6">
+        <div class="form-group">
+          <input id="beneficiario" class="form-control" name="creditorName"
+                 autocomplete="off" maxlength="70" value="">
+          <label for="beneficiario" class="fineco-label">Beneficiario</label>
+        </div>
+      </div>
+      <div class="pl-2 col-6">
+        <div class="form-group">
+          <input id="iban" class="form-control" name="creditorAccount.iban"
+                 maxlength="27" value="">
+          <label for="iban" class="fineco-label">IBAN del beneficiario</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- DATI PAGAMENTO -->
+    <div class="my-4 row">
+      <div class="col-8"><h4>DATI PAGAMENTO</h4></div>
+      <div class="col-4"><h4>ESECUZIONE</h4></div>
+    </div>
+    <div class="my-4 row">
+      <div class="pr-2 col-6">
+        <div class="form-group">
+          <input id="amount" class="form-control" name="instructedAmount.amount"
+                 maxlength="10" value="">
+          <label for="amount" class="fineco-label">Importo EUR</label>
+        </div>
+      </div>
+      <div class="col-4">
+        <div class="form-group">
+          <select id="executionMode" class="form-control" name="executionMode">
+            <option value="">&nbsp;</option>
+            <option value="ordinary">Esecuzione ordinaria</option>
+            <option value="instant" disabled>Esecuzione istantanea</option>
+          </select>
+          <label for="executionMode" class="fineco-label">Ordinaria o istantanea</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col">
+        <div class="form-group">
+          <textarea id="causale" class="form-control" name="remittanceInformationUnstructured"
+                    maxlength="140"></textarea>
+          <label for="causale" class="fineco-label">Causale</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- DATI ORDINANTE -->
+    <div class="my-4 row">
+      <div class="col"><h4>DATI ORDINANTE</h4></div>
+    </div>
+    <div class="my-4 row">
+      <div class="pr-2 col-8">
+        <div class="form-group">
+          <select id="conto" class="form-control" name="debtorName">
+            <option value="">&nbsp;</option>
+            <option value="MARIO ROSSI">MARIO ROSSI</option>
+          </select>
+          <label for="conto" class="fineco-label">Ordinante</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUBMIT -->
+    <div class="d-flex justify-content-end pt-3 pb-2 mt-2 bg-lighter row">
+      <div class="text-center col-3">
+        <button type="submit" id="paymentFormSubmit" class="btn-sm btn btn-primary">CONTINUA</button>
+      </div>
+    </div>
+
+  </form>
+</div>
+
+<!-- ═══════════════════ MOCK chrome API + carica fineco.js ═══════════════════ -->
+<script>
+  // ── Mock chrome.storage.local (backed by sessionStorage per semplicità) ──
+  const STORAGE_KEY = 'fineco_mock_payments';
+
+  function readStore() {
+    try { return JSON.parse(sessionStorage.getItem(STORAGE_KEY) || '[]'); }
+    catch { return []; }
+  }
+  function writeStore(payments) {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payments));
+    notifyListeners();
+  }
+
+  const storageChangeListeners = [];
+  function notifyListeners() {
+    storageChangeListeners.forEach(fn => fn());
+  }
+
+  window.chrome = {
+    storage: {
+      local: {
+        get(keys, cb) {
+          const payments = readStore();
+          cb({ payments });
+        },
+        set(data, cb) {
+          if (data.payments !== undefined) writeStore(data.payments);
+          if (cb) cb();
+        }
+      },
+      onChanged: {
+        addListener(fn) { storageChangeListeners.push(fn); }
+      }
+    }
+  };
+
+  // ── Helpers barra di test ──
+  function seedSinglePayment() {
+    const payments = readStore();
+    payments.push({
+      id: crypto.randomUUID(),
+      beneficiary: 'Acme S.r.l.',
+      iban: 'IT60X0542811101000000123456',
+      amount: '1220.00',
+      reference: 'Fattura 2026/001 del 05/02/2026',
+      dueDate: '2026-03-15',
+      status: 'pending',
+      addedAt: new Date().toISOString(),
+      paidAt: null
+    });
+    writeStore(payments);
+    refreshStoragePreview();
+  }
+
+  function seedMultiplePayments() {
+    const payments = readStore();
+    const samples = [
+      { beneficiary: 'Mario Bianchi Consulenze',  iban: 'IT40S0542811101000000654321', amount: '500.00',  reference: 'Fattura 2026/005 del 10/02/2026', dueDate: '2026-03-20' },
+      { beneficiary: 'Tech Solutions S.p.A.',     iban: 'IT80A0301903200000002034561', amount: '3600.00', reference: 'Fattura 2026/012 del 20/02/2026', dueDate: '2026-04-01' },
+      { beneficiary: 'Studio Legale Verdi & C.',  iban: 'IT50K0200805364000400197201', amount: '840.00',  reference: 'Fattura 2026/003 del 01/03/2026', dueDate: null }
+    ];
+    samples.forEach(s => payments.push({
+      id: crypto.randomUUID(), status: 'pending',
+      addedAt: new Date().toISOString(), paidAt: null, ...s
+    }));
+    writeStore(payments);
+    refreshStoragePreview();
+  }
+
+  function clearStorage() {
+    writeStore([]);
+    refreshStoragePreview();
+  }
+
+  function refreshStoragePreview() {
+    const payments = readStore();
+    const el = document.getElementById('storage-preview');
+    if (payments.length === 0) { el.textContent = '— storage vuoto —'; return; }
+    el.textContent = payments.map(p =>
+      `[${p.status}] ${p.beneficiary} | €${p.amount} | ${p.iban}`
+    ).join('\n');
+  }
+
+  refreshStoragePreview();
+</script>
+
+<!-- fineco.js caricato DOPO il mock chrome, così trova window.chrome già pronto -->
+<script src="../fineco.js"></script>
+
+</body>
+</html>

@@ -2,11 +2,6 @@
 (function() {
   'use strict';
 
-  // Load QRCode library
-  const script = document.createElement('script');
-  script.src = chrome.runtime.getURL('qrcode.min.js');
-  document.head.appendChild(script);
-
   // Load PDF.js library
   const pdfScript = document.createElement('script');
   pdfScript.src = chrome.runtime.getURL('pdfjs/pdf.min.js');
@@ -64,36 +59,13 @@
     }
   }
 
-  // EPC QR Code Generator
-  class EPCQRGenerator {
-    static generate(paymentData) {
-      // EPC QR Code format (SEPA Credit Transfer)
-      const lines = [
-        'BCD',                           // Service Tag
-        '002',                           // Version
-        '1',                             // Character set (UTF-8)
-        'SCT',                           // Identification
-        '',                              // BIC (optional)
-        paymentData.beneficiary,         // Beneficiary name
-        paymentData.iban,                // Beneficiary account (IBAN)
-        'EUR' + paymentData.amount,      // Amount (EUR + value)
-        '',                              // Purpose (optional)
-        paymentData.reference,           // Structured reference
-        '',                              // Unstructured remittance
-        ''                               // Beneficiary to originator info
-      ];
-      
-      return lines.join('\n');
-    }
-  }
-
   // UI Component
   class QRCodeModal {
     constructor() {
       this.modal = null;
     }
 
-    show(paymentData, qrData) {
+    show(paymentData) {
       // Remove existing modal if any
       this.hide();
 
@@ -105,7 +77,7 @@
       this.modal.innerHTML = `
         <div class="invoice-qr-content">
           <div class="invoice-qr-header">
-            <h2>Pagamento Fattura</h2>
+            <h2>💼 Salva Fattura per Bonifico</h2>
             <button class="invoice-qr-close">&times;</button>
           </div>
           <div class="invoice-qr-body">
@@ -115,15 +87,14 @@
               <p><strong>Importo:</strong> €${this.escapeHtml(paymentData.amount)}</p>
               <p><strong>Causale:</strong> ${this.escapeHtml(paymentData.reference)}</p>
             </div>
-            <div class="invoice-qr-code" id="qrcode-container"></div>
             <p class="invoice-qr-instructions">
-              Scansiona il QR code con l'app della tua banca per pagare
+              Salva i dati per compilare automaticamente il bonifico su Fineco.
             </p>
             <div class="invoice-qr-save-section">
               <label class="invoice-qr-save-label">Scadenza pagamento</label>
               <div class="invoice-qr-save-row">
                 <input type="date" class="invoice-qr-due-date" value="${this.escapeHtml(dueDateValue)}">
-                <button class="invoice-qr-save-btn">💾 Salva scadenza</button>
+                <button class="invoice-qr-save-btn">💾 Salva per Fineco</button>
                 <span class="invoice-qr-save-feedback"></span>
               </div>
             </div>
@@ -132,18 +103,6 @@
       `;
 
       document.body.appendChild(this.modal);
-
-      // Generate QR code
-      setTimeout(() => {
-        new QRCode(document.getElementById('qrcode-container'), {
-          text: qrData,
-          width: 256,
-          height: 256,
-          colorDark: '#000000',
-          colorLight: '#ffffff',
-          correctLevel: QRCode.CorrectLevel.L
-        });
-      }, 100);
 
       // Close button handler
       this.modal.querySelector('.invoice-qr-close').addEventListener('click', () => {
@@ -304,8 +263,8 @@
   function createQRButton() {
     const button = document.createElement('button');
     button.className = 'invoice-qr-button';
-    button.innerHTML = '💳 Genera QR Pagamento';
-    button.title = 'Genera QR code per pagare questa fattura';
+    button.innerHTML = '💼 Salva per Bonifico';
+    button.title = 'Salva i dati di pagamento per compilare il bonifico su Fineco';
     return button;
   }
 
@@ -329,8 +288,7 @@
       return;
     }
 
-    const qrData = EPCQRGenerator.generate(paymentData);
-    qrModal.show(paymentData, qrData);
+    qrModal.show(paymentData);
   }
 
   // Gmail Integration

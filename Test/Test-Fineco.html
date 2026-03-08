@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Test Form Fineco</title>
+</head>
+<body>
+	<form class="fineco-form" autocomplete="off">
+		<!-- Header Section -->
+		<div class="row">
+			<div class="col-9">
+				Compila i campi o richiama i dati di un bonifico precedente dall'
+				<button type="button" class="h5 font-weight-normal btn btn-link">
+					<u>Archivio bonifici</u>
+				</button>
+			</div>
+			<div class="mx-0 px-0 col-3">
+				<div class="float-right">
+					<div class="custom-control custom-switch">
+						<input type="checkbox" id="taxReliefSwitch" class="custom-control-input" value="">
+						<label for="taxReliefSwitch" class="custom-control-label"></label>
+					</div>
+				</div>
+				<div class="float-right">
+					<i class="icon-bold icon-AgevolazioneFiscale_24px"></i>
+					<label for="taxReliefSwitch" data-for="TooltiptaxReliefSwitch" data-tip="true" currentitem="false">
+						Agevolazione fiscale
+					</label>
+				</div>
+				<div class="__react_component_tooltip t93c2696e-b25b-4f8a-b17c-ace101c6e0c4 place-top type-dark allow_click" id="TooltiptaxReliefSwitch" data-id="tooltip">
+					<strong>Nota</strong>
+					<br>
+					Selezionando questa opzione, puoi effettuare bonifici SEPA finalizzati ad ottenere agevolazioni fiscali in merito a interventi di&nbsp;ristrutturazione edilizia, interventi antisismici, acquisto di mobili e grandi elettrodomestici e riqualificazione energetica.
+					<br>
+					<br>
+					<strong class="text-danger">NEW! </strong>
+					<a type="link" href="https://help.finecobank.com/it/conto-e-carte/bonifici-e-giroconti.html#superbonus-110" class="help-no-icon icon-Help">
+						<strong>Superbonus al 110%</strong>
+					</a>
+					<br>
+					Utilizza una delle agevolazioni già presenti ed indica nel campo causale la data, il numero della fattura e i riferimenti normativi.
+				</div>
+			</div>
+		</div>
+
+		<!-- Beneficiary Data Section -->
+		<div class="my-4 row">
+			<div class="col">
+				<h4>
+					DATI BENEFICIARIO
+					<span class="text-primary icon-Help ml-1 solid helpbutton-react" data-for="tooltipBen" data-tip="Per la corretta esecuzione del bonifico, il campo Beneficiario deve essere valorizzato come segue:&lt;br/&gt;- &lt;strong&gt;Nome e cognome beneficiario&lt;/strong&gt;,&nbsp;in caso di persona fisica&lt;br/&gt;- &lt;strong&gt;Ragione sociale beneficiario&lt;/strong&gt;,&nbsp;in caso di persona giuridica" currentitem="false"></span>
+				</h4>
+			</div>
+		</div>
+
+		<div class="my-4 row">
+			<div class="pr-2 col-6">
+				<div class="form-group">
+					<input id="beneficiario" class="form-control is-untouched is-pristine fineco-react-search" name="creditorName" autocomplete="off" maxlength="70" value="">
+					<label for="beneficiario" class="fineco-label fineco-react-search-label">Beneficiario</label>
+				</div>
+				<button type="button" title="SELEZIONA BENEFICIARIO" class="icon-Rubrica-button btn-small btn btn-link">
+					<span class="d-none">SELEZIONA BENEFICIARIO</span>
+					<span class="icon-Rubrica"></span>
+				</button>
+			</div>
+			<div class="pl-2 col-6">
+				<div class="form-group">
+					<input id="iban" class="form-control is-untouched is-pristine" name="creditorAccount.iban" maxlength="27" value="">
+					<label for="iban" class="fineco-label">IBAN/Conto corrente del beneficiario</label>
+				</div>
+				<span class="text-primary icon-Help ml-1 solid helpbutton-react helpbutton-input" data-for="tooltipBen" data-tip="L'IBAN è un codice che identifica il conto del Beneficiario ed è composto da 27 caratteri alfanumerici." currentitem="false"></span>
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="col">
+				<div class="custom-control custom-checkbox">
+					<input type="checkbox" id="2f2bee39-3276-ae65-f502-db50964b2a9c" class="custom-control-input is-untouched is-pristine" name="addCreditorToAddressBook" value="true">
+					<label for="2f2bee39-3276-ae65-f502-db50964b2a9c" class="custom-control-label">Salva in rubrica</label>
+				</div>
+			</div>
+		</div>
+
+		<!-- Payment Data Section -->
+		<div class="my-4 row">
+			<div class="col-8">
+				<h4>DATI PAGAMENTO</h4>
+			</div>
+			<div class="col-4">
+				<h4>
+					ESECUZIONE
+					<span class="text-primary icon-Help ml-1 solid helpbutton-react" data-for="tooltipConosciIlBeneficiario" data-tip="&lt;strong&gt;Conosci il beneficiario?&lt;/strong&gt;&lt;br/&gt;Se vi viene chiesto per telefono di inviare del denaro, potrebbe trattarsi di una truffa.&lt;br/&gt;&lt;strong&gt;Attenzione: i bonifici con esecuzione istantanea immediata non possono essere revocati.&lt;/strong&gt;" currentitem="false"></span>
+				</h4>
+				<div class="__react_component_tooltip t19da7cc7-bdfb-44a4-89c7-0ab65b3b4c9e place-top type-dark" id="tooltipConosciIlBeneficiario" data-id="tooltip"></div>
+			</div>
+		</div>
+
+		<div class="my-4 position-relative row">
+			<div class="pr-2 col-6">
+				<div class="form-group">
+					<input id="amount" class="form-control is-untouched is-pristine" name="instructedAmount.amount" maxlength="10" value="">
+					<label for="amount" class="fineco-label">Importo EUR</label>
+				</div>
+			</div>
+			<div class="account-balance-update undefined col">
+				<div class="h4 font-weight-normal mt-1">Saldo rimanente:</div>
+				<div class="h4 font-weight-normal mt-1">
+					<strong>1000,00 EUR</strong>
+				</div>
+			</div>
+			<div class="col-4">
+				<div class="form-group">
+					<select id="executionMode" class="form-control is-untouched is-pristine" name="executionMode">
+						<option value="">&nbsp;</option>
+						<option value="ordinary">Esecuzione ordinaria</option>
+						<option value="instant" disabled="">Esecuzione istantanea</option>
+					</select>
+					<label for="executionMode" class="fineco-label">Ordinaria o istantanea</label>
+				</div>
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="col">
+				<div class="form-group">
+					<textarea id="causale" class="form-control is-untouched is-pristine" name="remittanceInformationUnstructured" maxlength="140"></textarea>
+					<label for="causale" class="fineco-label">Causale</label>
+				</div>
+			</div>
+		</div>
+
+		<!-- Execution Date Section -->
+		<div class="my-4 row">
+			<div class="col-4">
+				<input type="hidden" name="requestedExecutionDate" value="Sun Mar 08 2026 00:00:00 GMT+0100 (Ora standard dell'Europa centrale)">
+				<div class="form-group custom-calendar" id="dataAccredito">
+					<label for="dataAccredito" class="fineco-label fineco-used">Data accredito</label>
+					<div class="react-date-picker react-date-picker--closed react-date-picker--enabled form-control custom-calendar is-untouched is-pristine has-value">
+						<div class="react-date-picker__wrapper">
+							<div class="react-date-picker__inputGroup">
+								<input max="275760-09-13" min="2026-03-08" name="requestedExecutionDatedatepicker" type="date" value="2026-03-08">
+								<span class="react-date-picker__inputGroup__leadingZero">0</span>
+								<input autocomplete="off" class="react-date-picker__inputGroup__input react-date-picker__inputGroup__day react-date-picker__inputGroup__input--hasLeadingZero" data-input="true" inputmode="numeric" max="31" min="8" name="day" placeholder="--" type="number" value="8">
+								<span class="react-date-picker__inputGroup__divider">/</span>
+								<span class="react-date-picker__inputGroup__leadingZero">0</span>
+								<input autocomplete="off" class="react-date-picker__inputGroup__input react-date-picker__inputGroup__month react-date-picker__inputGroup__input--hasLeadingZero" data-input="true" inputmode="numeric" max="12" min="3" name="month" placeholder="--" type="number" value="3">
+								<span class="react-date-picker__inputGroup__divider">/</span>
+								<input autocomplete="off" class="react-date-picker__inputGroup__input react-date-picker__inputGroup__year" data-input="true" inputmode="numeric" max="275760" min="2026" name="year" placeholder="----" step="1" type="number" value="2026">
+							</div>
+							<button class="react-date-picker__clear-button react-date-picker__button" type="button">
+								<span class="icon-Close ico16 solid text-primary"></span>
+							</button>
+							<button class="react-date-picker__calendar-button react-date-picker__button" type="button">
+								<span class="icon-Calendar2 ico24 solid text-primary"></span>
+							</button>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="col">
+				<div>
+					<input type="hidden" name="requestedExecutionDateFake">
+					<div class="form-group custom-calendar" id="dataAccreditoFake">
+						<label for="dataAccreditoFake" class="fineco-label">Data accredito</label>
+						<div class="react-date-picker react-date-picker--closed react-date-picker--disabled form-control custom-calendar is-untouched is-pristine no-value">
+							<div class="react-date-picker__wrapper">
+								<div class="react-date-picker__inputGroup">
+									<input disabled="" max="275760-09-13" min="0001-01-01" name="requestedExecutionDateFakedatepicker" type="date" value="">
+									<input autocomplete="off" class="react-date-picker__inputGroup__input react-date-picker__inputGroup__day" data-input="true" disabled="" inputmode="numeric" max="31" min="1" name="day" placeholder="--" type="number" value="">
+									<span class="react-date-picker__inputGroup__divider">/</span>
+									<input autocomplete="off" class="react-date-picker__inputGroup__input react-date-picker__inputGroup__month" data-input="true" disabled="" inputmode="numeric" max="12" min="1" name="month" placeholder="--" type="number" value="">
+									<span class="react-date-picker__inputGroup__divider">/</span>
+									<input autocomplete="off" class="react-date-picker__inputGroup__input react-date-picker__inputGroup__year" data-input="true" disabled="" inputmode="numeric" max="275760" min="1" name="year" placeholder="----" step="1" type="number" value="">
+								</div>
+								<button class="react-date-picker__calendar-button react-date-picker__button" disabled="" type="button">
+									<span class="icon-Calendar2 ico24 solid text-primary"></span>
+								</button>
+							</div>
+						</div>
+					</div>
+					<div class="__react_component_tooltip tcecf7771-7d14-4f8c-8a93-fd8cce9fb4b1 place-top type-dark" id="tooltipDataAccreditoFake" role="tooltip" data-id="tooltip">
+						E' necessario selezionare prima la tipologia di esecuzione
+					</div>
+				</div>
+			</div>
+
+			<div class="col-3">
+				<div class="float-right">
+					<div class="custom-control custom-switch">
+						<input type="checkbox" id="periodicSwitch" class="custom-control-input" value="">
+						<label for="periodicSwitch" class="custom-control-label"></label>
+					</div>
+				</div>
+				<div class="float-right">
+					<label for="periodicSwitch">Bonifico continuativo</label>
+				</div>
+			</div>
+		</div>
+
+		<!-- Debtor Data Section -->
+		<div class="my-4 row">
+			<div class="col">
+				<h4>
+					DATI ORDINANTE
+					<span class="text-primary icon-Help ml-1 solid helpbutton-react font-weight-normal" data-for="tooltipOrd" data-tip="Seleziona l'ordinante del bonifico tra gli intestatari del conto corrente" currentitem="false"></span>
+				</h4>
+				<div class="__react_component_tooltip tc06c9963-4c70-4ed1-ae60-d6e386f9b6b8 place-top type-dark" id="tooltipOrd" data-id="tooltip"></div>
+			</div>
+		</div>
+
+		<div class="my-4 row">
+			<div class="pr-2 col-8">
+				<div class="form-group">
+					<select id="conto" class="form-control is-untouched is-pristine" name="debtorName">
+						<option value="">&nbsp;</option>
+						<option value="XXX">XXX</option>
+						<option value="YYY">YYY</option>
+						<option value="ZZZ">ZZZ</option>
+					</select>
+					<label for="conto" class="fineco-label fineco-used">Ordinante</label>
+				</div>
+			</div>
+		</div>
+
+		<!-- Submit Button -->
+		<div class="d-flex justify-content-end pt-3 pb-2 mt-2 bg-lighter row">
+			<div class="text-center col-3">
+				<button type="submit" id="paymentFormSubmit" class="btn-sm btn btn-primary">CONTINUA</button>
+			</div>
+		</div>
+	</form>
+</body>
+</html>
